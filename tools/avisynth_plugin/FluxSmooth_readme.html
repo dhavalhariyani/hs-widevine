@@ -1,0 +1,160 @@
+<html>
+	<head>
+		<title>FluxSmooth</title>
+	</head>
+	<body bgcolor="#ffffff" text="#000000">
+		<h1>FluxSmooth</h1>
+		<h3>An Avisynth filter for smoothing of fluctuations</h3>
+		<p><b>By Ross Thomas &lt;ross@grinfinity.com&gt;</b></p>
+		<p><b>There is no copyright on this code, and there are no conditions on its 
+				distribution or use. Do with it what you will.</b></p>
+		<h2>Description</h2>
+		<p>One of the fundamental properties of noise is that it's random. One of the 
+			fundamental properties of motion is that it's not. This is the premise behind 
+			FluxSmooth, which examines each pixel and compares it to the corresponding 
+			pixel in the previous and last frame. Smoothing occurs if both the previous 
+			frame's value and the next frame's value are greater, or if both are less, than 
+			the value in the current frame.</p>
+		<p>I like to call this a "fluctuating" pixel, then I like to wipe that pixel from 
+			existence by averaging it with its neighbours. For FluxSmoothST, this 
+			is&nbsp;(by default) done in a spatio-temporal manner, in that for each 
+			fluctuating pixel its 8 immediate spatial neighbours as well as its 2 temporal 
+			neighbours (the abovementioned corresponding pixel from the previous and next 
+			frames) are considered for inclusion in the average. If the value of each pixel 
+			is within the specified threshold, it is included. If not, it isn't. 
+			FluxSmoothT performs only temporal averaging.</p>
+		<p>This filter seems to remove almost all noise from low-noise sources (such as 
+			DVD) and a lot of noise from high-noise sources (such as cable TV captures), 
+			while maintaining a good amount of detail.</p>
+		<p>If your CPU supports integer SSE operations (Intel Pentium III and better, AMD 
+			Athlon and better) an optimized version of the algorithm will be used.</p>
+		<P>Using FluxSmoothT instead of FluxSmoothST for temporal-only smoothing is much, 
+			much faster (50% faster on my system).</P>
+		<h2>Usage</h2>
+		<blockquote>
+			<P>FluxSmoothT([clip], int <I>temporal_threshold</I>)</P>
+			<P>FluxSmoothST([clip], int <i>temporal_threshold</i>, int <i>spatial_threshold</i>)</P>
+		</blockquote>
+		<table border="1">
+			<tr>
+				<th>
+					Parameter</th>
+				<th>
+					Meaning</th>
+				<th>
+					Default</th>
+			</tr>
+			<tr>
+				<td><i>temporal_threshold</i></td>
+				<td>
+					<p>Temporal neighbour pixels within this threshold from the current pixel are 
+						included in the average.</p>
+					<p>If set to -1, no temporal smoothing occurs. (Cannot be set to -1 in 
+						FluxSmoothT.)</p>
+				</td>
+				<td>7</td>
+			</tr>
+			<tr>
+				<td><i>spatial_threshold</i></td>
+				<td>
+					<p>Spatial neighbour pixels within this threshold from the current pixel are 
+						included in the average.</p>
+					<p>If set to -1, no spatial smoothing occurs.</p>
+				</td>
+				<td>7</td>
+			</tr>
+		</table>
+		<h2>Known Issues</h2>
+		<ul>
+			<li>
+			The very edges of the frame are unprocessed.
+			<li>
+			The very first and very last frame of a clip is unprocessed.
+			<LI>
+				Appears to cause an access violation when used with n-pass encoding in CCE. 
+				I've been unable to duplicate this. Might've been related to the memory leak 
+				fixed by fabrice.</LI>
+		</ul>
+		<h2>TODO</h2>
+		<ul>
+			<li>
+				Optimize SSE code with regard to pairing, stalls, and so on.</li>
+		</ul>
+		<h2>Author</h2>
+		<p>Ross Thomas &lt;ross@grinfinity.com&gt;</p>
+		<h2>History</h2>
+		<table border="1">
+			<tr>
+				<th>
+					Version</th>
+				<th>
+					Description</th>
+			</tr>
+			<TR>
+				<TD>1.1b</TD>
+				<TD>Fixed assuming previous and next frame pitches were the same as
+					the current frame pitch.</TD>
+			</TR>
+			<TR>
+				<TD>1.1a</TD>
+				<TD>Yet another "oops" release. Current pixel is once again considered in the 
+					averaging code -- I found the lack of it too aggressive, especially during fast 
+					motion. Also fixed stupid "3am bug" involving a couple of variables I'd 
+					declared static that shouldn't've been. Thanks to krieger2005 for spotting that 
+					one, and ARDA for diagnosing it.</TD>
+			</TR>
+			<TR>
+				<TD>1.1</TD>
+				<TD>Changed the averaging code so that the current pixel is excluded, which 
+					produces better noise reduction. Also split the code into two different 
+					filters, FluxSmoothT and FluxSmoothST. The former does temporal-only smoothing 
+					(equivalent to setting "spatial_threshold=-1" in&nbsp;FluxSmoothST) and is 
+					about 50% faster. Removed&nbsp;Avisynth 2.0x version to tidy up the code base. 
+					Does anyone actually use it any more? My thanks to fabrice and sh0dan for the 
+					1.01 release during my extended absence&nbsp;:).</TD>
+			</TR>
+			<TR>
+				<TD>1.01</TD>
+				<TD>Added by sh0dan:<br>
+					- Removed leak in AviSynth 2.5 YV12 mode (code by fabrice)<br>
+					- Aligned tables and variables.<br>
+					- Use AviSynth BitBlt for copying chroma.<br>
+					- Don't use streaming store. (movntq)<br>
+					All in all an approximate 15% speedup compared to previous version. All changes 
+					are marked with "sh0:".</TD>
+			<TR>
+				<TD>1.0</TD>
+				<TD>First "stable" release. I think it's been tested enough, but wait for a bunch 
+					of bugs to emerge and make me a liar... Fixed a bug that, in conjunction with a 
+					bug in the built-in resizers, caused an access violation under certain 
+					circumstances. Thanks to sh0dan for spotting that one :). Added "SetCacheHints" 
+					and upgraded to "AvisynthPluginInit2" in 2.5 version.</TD>
+			</TR>
+			<TR>
+				<TD>0.4</TD>
+				<TD>Implemented iSSE-optimized version, which runs roughly double the speed of the 
+					C++ version. Some small optimizations to C++ version. Now smooths chroma as 
+					well as luma.</TD>
+			</TR>
+			<TR>
+				<TD>0.3</TD>
+				<TD>Fixed bad bug that caused incorrect smoothing: no more in-place filtering. 
+					Changed defaults back to what they were, now that the algorithm works 
+					correctly.&nbsp;Spent some time benchmarking and tweaking various pieces of 
+					code, so should now be significantly faster.</TD>
+			</TR>
+			<tr>
+				<td>0.2</td>
+				<td>
+					<p>Fixed non-fatal bug that caused a request for one frame beyond the end of the 
+						clip. Changed to in-place filtering so could squeeze a few optimizations here 
+						and there. Changed too-high defaults. First Avisynth 2.5/YV12 release.</p>
+				</td>
+			</tr>
+			<tr>
+				<td>0.1</td>
+				<td>First release. Alpha code.</td>
+			</tr>
+		</table>
+	</body>
+</html>

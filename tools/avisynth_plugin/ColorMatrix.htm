@@ -1,0 +1,453 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <META NAME="GENERATOR" CONTENT="Microsoft FrontPage 4.0">
+   <TITLE>ColorMatrix</TITLE>
+<style type="text/css">
+body      { font-family: verdana, arial, helvetica, sans-serif; color: #000000; 
+            font-size: 12px; background-color: #C8D4D8; text-align: Left; 
+            line-height: 150%;
+            padding: 0px;
+            margin: 6px;}
+
+h1        { font-family: verdana, arial, helvetica, sans-serif; font-size: 26px; 
+            line-height: 150%; color: #000000;
+            padding: 0px 0px 0px 8px
+            margin-left: 0px; margin-right: 0px; margin-top: 12px; margin-bottom: 12px;}
+
+h2        { font-family: verdana, arial, helvetica, sans-serif; font-size: 22px; 
+            line-height: 150%; color: #000000; 
+            background-color: #90A0C0;
+            padding:  0px 0px 0px 8px;
+            margin-left: 0px; margin-right: 0px; margin-top: 12px; margin-bottom: 12px; 
+            border: #8080D0; border-style: solid;
+            border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px}
+
+h3        { font-family: verdana, arial, helvetica, sans-serif; font-size: 18px; 
+            line-height: 150%; color: #000000;
+            padding: 0px 0px 0px 8px;
+            margin-left: 0px; margin-right: 0px; margin-top: 12px; margin-bottom: 12px;
+            border: #8080D0; border-style: solid; border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px}
+
+h4        { font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 12px;
+            font-style: normal; font-weight: bold; text-decoration: underline}
+
+a         { color: #005090; text-decoration: none; font-family: verdana, arial, helvetica, sans-serif }
+a:link    { color: #005090}
+a:visited { color: #005090}
+a:hover   { background-color: #FF6060; color: #005090}
+
+table     { font-size: 12px; margin-left: 0px; margin-top: 12px; margin-bottom: 12px;
+            line-height: 150% }
+
+pre       { font-size: 12px; font-family: Courier, mono;
+            margin-top: 10px; margin-bottom: 10px; 
+            background-color: #D0D0C0;
+            padding-left: 12px; padding-top: 12px; padding-right: 12px; padding-bottom: 12px;
+            border: #908030; border-style: solid; border-top-width: 1px; border-right-width: 1px; border-bottom-width: 1px; border-left-width: 1px}
+
+code      { font-family: Courier, mono; font-size: 12px; letter-spacing: 1px; color: #660033}
+var       { font-family: Verdana, Arial, Helvetica, sans-serif; font-weight: normal; font-size: 12px;
+            font-style: italic; letter-spacing: 1px; color: #660033}
+tt        { font-family: Courier, mono; font-size: 12px}
+em        { font-family: Courier, mono; font-weight: normal; color: #FFFFFF; font-style: normal}
+strong    { font-family: Courier, mono; font-weight: bold; color: #FFFF66; font-style: normal}
+cite      { border: 1px #3030A0 dotted; padding-left: 2px; padding-right: 2px; padding-top: 1px; padding-bottom: 1px}
+kbd       { color: #808000; font-family: Verdana, Arial, Helvetica, sans-serif; font-weight: normal; font-size: 10px; font-style: normal}
+</style>
+</HEAD>
+<BODY>
+
+<h1>ColorMatrix v2.5</h1>
+<h2>Abstract</h2>
+<ul>
+<b>author:</b>    tritical
+<br><b>version:</b> v2.5<br>
+<b>download:</b>   <a href="http://bengal.missouri.edu/~kes25c/">http://bengal.missouri.edu/~kes25c/</a>
+<br><b>category:</b>   Misc Plugins
+<br><b>requirements:</b>&nbsp;
+<ul>
+  <li>YV12 &amp; YUY2 Colorspace</li>
+</ul>
+<p><b>license:</b> GPL</p>
+</ul>
+
+<h2>Description</h2>
+<ul>
+<P>
+ColorMatrix v2.0 is based on the original ColorMatrix filter by Wilbert Dijkhof.
+</p>
+<p>
+When converting from RGB to YUV and vice versa there are multiple sets of coefficients that can be used.
+The most common are Rec.709, FCC, Rec.601 (aka SMPTE 170M or ITU-R BT.470-2), and SMPTE 240M.  The purpose 
+of ColorMatrix is to recalculate the values of a YUV video that has been converted from RGB using one set 
+of coefficients to what the values would be had it been converted from RGB using a different set of 
+coefficients.  The reason this is useful is that MPEG-2 streams typically use Rec.709, whereas most computer 
+software (XviD/DivX decoders, etc...) assumes Rec.601. Thus, if you take an MPEG-2 stream using Rec.709 and 
+pass it as YUV to a decoder which upsamples to RGB using Rec.601 the colors will be slightly off.  In this 
+case, you could use ColorMatrix to convert the video from Rec.709 to Rec.601 and then pass it to 
+the decoder.  Another example is if you capture video with software that uses Rec.601 and then want to encode 
+it to MPEG-2 using an encoder that assumes Rec.709.
+</P>
+<P>
+At first glance, it would appear that to accomplish its task ColorMatrix would need to internally
+convert to RGB using the source coefficients and then convert back to YUV using the new coefficients. 
+However, this is not the case.  What colormatrix actually does is compute the inverse matrix of the source 
+coefficients (gives a matrix for doing YUV->RGB) and then multiplies that matrix with the new coefficient matrix. 
+This gives a set of coefficients for doing the conversion directly from YUV to YUV.
+</P>
+<P>
+ColorMatrix supports YV12 and YUY2 colorspaces, and can convert between Rec.709, FCC, Rec.601, and SMPTE 240M.
+ColorMatrix also has the ability to do range expansion and contraction 
+([16,235/240]->[0,255] or [0,255]->[16,235/240]) as part of the colorimetry conversion or on its own.
+</P>
+</ul>
+
+
+<h3>Syntax</h3>
+<ul>
+<P>
+<code>ColorMatrix </code>(clip, string <var>&quot;mode&quot;</var>, int <var>&quot;source&quot;</var>, 
+int <var>&quot;dest&quot;</var>, int <var>&quot;clamp&quot;</var>, bool <var>&quot;interlaced&quot;</var>, 
+bool <var>&quot;inputFR&quot;</var>, bool <var>&quot;outputFR&quot;</var>, bool <var>&quot;hints&quot;</var>, 
+string <var>&quot;d2v&quot;</var>, bool <var>&quot;debug&quot;</var>, int <var>&quot;threads&quot;</var>, 
+int <var>&quot;thrdmthd&quot;</var>, int <var>&quot;opt&quot;</var>)
+</P>
+</ul>
+
+
+<h3>Parameters</h3>
+<ul>
+
+
+<p><var>mode</var>:</p>
+<ul>
+<p>Can be used to set the source and destination formats in string form. Specify the 
+string as <code>"source->dest"</code>, where <code>source</code> and <code>dest</code> are 
+each replaced by one of the following (capitalization does not matter):</p>
+<ul>
+<li>Rec.709
+<li>FCC
+<li>Rec.601
+<li>SMPTE 240M
+</ul>
+<p>Examples:</p>
+<ul>
+<li>ColorMatrix(mode="Rec.709->Rec.601")
+<li>ColorMatrix(mode="Rec.601->FCC")
+<li>ColorMatrix(mode="SMPTE 240M->Rec.601")
+<li>ColorMatrix(mode="Rec.709->FCC")
+</ul>
+<p><var>source</var> and <var>dest</var> cannot be the same if <var>inputFR</var> and 
+<var>outputFR</var> are also the same.</p>
+<p>default -&nbsp;&nbsp;""  (string)</p>
+</ul>
+
+
+<p><var>source</var>:</p>
+<ul>
+<p>Allows setting the source format in integer form.  If the <var>mode</var> parameter is specified, 
+then it will override <var>source</var>.  Possible settings:</p>
+<ul>
+<li>0 - Rec.709
+<li>1 - FCC
+<li>2 - Rec.601
+<li>3 - SMPTE 240M
+</ul>
+<p>The <var>source</var> and <var>dest</var> parameters cannot be equal if 
+<var>inputFR</var> and <var>outputFR</var> are also equal.</p>
+<p>default -&nbsp;&nbsp;0  (int)</p>
+</ul>
+
+
+<p><var>dest</var>:</p>
+<ul>
+<p>Allows setting the destination format in integer form.  If the <var>mode</var> parameter is specified, 
+then it will override <var>dest</var>.  Possible settings:</p>
+<ul>
+<li>0 - Rec.709
+<li>1 - FCC
+<li>2 - Rec.601
+<li>3 - SMPTE 240M
+</ul>
+<p>The <var>source</var> and <var>dest</var> parameters cannot be equal if 
+<var>inputFR</var> and <var>outputFR</var> are also equal.</p>
+<p>default -&nbsp;&nbsp;2  (int)</p>
+</ul>
+
+
+<p><var>clamp</var>:</p>
+<ul>
+<p>Specifies whether pre/post clipping with limiter to 16-235/16-240 should be used.  Possible settings:</p>
+<ul>
+<li>0 - no clipping
+<li>1 - pre clipping (clip input to ColorMatrix)
+<li>2 - post clipping (clip output from ColorMatrix)
+<li>3 - pre and post clipping
+</ul>
+<p>3 is what previous (v1.x) versions of ColorMatrix used.
+<p>default -&nbsp;&nbsp;3  (int)</p>
+</ul>
+
+
+<p><var>interlaced</var>:</p>
+<ul>
+<p>Interlaced YV12 video requires special handling... so if your video is YV12 and is interlaced 
+you need to set this parameter to true.  Otherwise, leave it false.  For interlaced processing 
+the input clip to ColorMatrix must not be fieldbased.  If it is, ColorMatrix will throw an error 
+indicating this and stating that you should use AssumeFrameBased() beforehand.</p>
+<p>default -&nbsp;&nbsp;false  (bool)</p>
+</ul>
+
+
+<p><var>inputFR</var>:</p>
+<ul>
+<p>Tells ColorMatrix whether the input video is full-range [0-255] or limited-range [16-235/240].
+This setting has no effect if it is set equal to <var>outputFR</var>. A value of true indicates 
+full-range and false indicates limited-range.</p>
+<p>default -&nbsp;&nbsp;false  (bool)</p>
+</ul>
+
+
+<p><var>outputFR</var>:</p>
+<ul>
+<p>Tells ColorMatrix whether to output full-range [0-255] or limited-range [16-235/240] YUV values.
+This setting has no effect if it is set equal to <var>inputFR</var>. A value of true indicates 
+full-range and false indicates limited-range.</p>
+<p>default -&nbsp;&nbsp;false  (bool)</p>
+</ul>
+
+
+<p><var>hints</var>:</p>
+<ul>
+<p>
+DGDecode v1.20 or newer can output colorimetry hints in the video stream which ColorMatrix can read in 
+order to automatically determine the source coefficients. To enable this, set <code>info=3</code> in 
+<code>mpeg2source()</code> and set <code>hints=true</code> in <code>ColorMatrix()</code> as shown below:</p>
+<ul><pre>Mpeg2source(&quot;F:\TestStreams\avs\AguileraGrammies.d2v&quot;, info=3)
+ColorMatrix(hints=true)</pre></ul>
+<p>If you would like to view the colorimetry info use <code>info=1</code> in <code>mpeg2source()</code> 
+as shown below:</p>
+<ul><pre>Mpeg2source(&quot;F:\TestStreams\avs\AguileraGrammies.d2v&quot;, info=1)</pre></ul>
+<p>If ColorMatrix is unable to detect hints in the stream (for example because you are using an incorrect 
+dgdecode version) it will output an error.  When using hints=true, the conversion specified by <var>mode</var> 
+(or by <var>source</var> and <var>dest</var> if <var>mode</var> is not set) will only be applied when the 
+colorimetry of the input video does not match the destination colorimetry. For example, if <var>mode</var> 
+is set to "Rec.709->Rec.601" (or <var>mode</var> is left blank and <var>source</var>=0 and <var>dest</var>=2), 
+then the conversion will only be applied if the input video's colorimetry is not already "Rec.601".  If the 
+input video's colorimetry already matches the destination colorimetry, then the frames are passed through 
+untouched (except for limiter if <var>clamp</var>>0 or for range conversion if <var>inputFR</var> and 
+<var>outputFR</var> are not equal). You can see which scenario is happening by using 
+<var>debug</var>=true.</p>
+<p>default -&nbsp;&nbsp;false  (bool)</p>
+</ul>
+
+
+<p><var>d2v</var>:</p>
+<ul>
+<p>Newer versions of DGIndex (v1.20+) write the colorimetry information into the d2v project file. 
+ColorMatrix is able to parse the d2v file and automatically determine the source coefficients from 
+that information. To enable this, set the <var>d2v</var> parameter equal to the path and name of 
+the d2v project file as shown below:</p>
+<ul><pre>Mpeg2source(&quot;F:\TestStreams\avs\AguileraGrammies.d2v&quot;)
+ColorMatrix(d2v=&quot;AguileraGrammies.d2v&quot;)</pre></ul>
+<p>If the d2v file is located in a different folder than the Avisynth script you will need to 
+give the full path. The operation of the filter when the <var>d2v</var> parameter is 
+specified is the same as with <var>hints</var>=true. If the input video's colorimetry already 
+matches the destination colorimetry specified in the <var>mode</var> parameter (or with <var>source</var> and 
+<var>dest</var>), then the conversion is not applied. If the colorimetry does not match, then the conversion 
+is applied. Using the <var>d2v</var> parameter is faster than using <var>hints</var>.</p>
+<p>It is possible for the colorimetry to change in a clip.  If this is the case, then the <var>d2v</var> option 
+will only work if you do not trim() or rearrange frames (ivtc for example) prior to the ColorMatrix call.  If 
+ColorMatrix detects that the colorimetry in the d2v file changes it will require that the number of frames 
+specified by the d2v file is equal to the number of frames in the input clip.  The <var>hints</var> option 
+does not have this restriction.</p>
+<p>For people who are interested, it is this (and subsequent) line(s) in the d2v
+file</p>
+<ul><pre>800 <b>5</b> 0 8210 0 0 32 32 92 b2 b2 a2 b2 b2 a2 b2 b2 a2</pre></ul>
+<p>I've made the colorimetry info bold. See <a href="#colorimetry">Colorimetry</a>
+for an explanation of the info.</p>
+<p>default -&nbsp;&nbsp;""  (string)</p>
+</ul>
+
+
+<p><var>debug</var>:</p>
+<ul>
+<p>If set to true, debug information is output via OutputDebugString().  You can use the 
+<a href="http://www.sysinternals.com/Utilities/DebugView.html">DebugView</a> utility from Systeminternals 
+to view this information. The information includes hints detected, routine being used (c, mmx, or sse), 
+etc...</p>
+<p>default -&nbsp;&nbsp;false  (bool)</p>
+</ul>
+
+
+<p><var>threads</var>:</p>
+<ul>
+<p>Sets the number of threads Colormatrix will use for processing.  Can be any value greater than 0 and, 
+for YUY2, less than the frame height, for YV12, less than the frame height divided by 2.  If set to 0, 
+ColorMatrix will automatically detect the number of available processors and set threads equal to that value.</p>
+<p>default -&nbsp;&nbsp;1  (int)</p>
+</ul>
+
+
+<p><var>thrdmthd</var>:</p>
+<ul>
+<p>Determines how a frame will be divided among the processing threads when threads is greater than 1.  
+Option 0 will split the frame into contiguous chunks (each thread will process a block of height/threads 
+lines).  Option 1 will split the frame into non-contiguous chunks (each thread will process every 
+threads'th line).</p>
+<p>default -&nbsp;&nbsp;0  (int)</p>
+</ul>
+
+
+<p><var>opt</var>:</p>
+<ul>
+<p>Due to rounding differences, the output from the mmx and sse2 routines (only present for YV12) is 
+not exactly the same as the output from the c routine (the c routine is more accurate). The maximum 
+difference between the simd and c routines is +-1 on the Y/U/V planes.  The mmx and sse2 routines 
+do produce matching output. If a range conversion occurs (<var>inputFR</var> and <var>outputFR</var> are 
+different), then only c routines are used.  The <var>opt</var> parameter is included to disable the 
+usage of simd optimizations if you want to.  Possible settings:</p>
+<ul>
+<li>0 - force c routine
+<li>1 - force mmx routine
+<li>2 - force sse2 routine
+<li>3 - auto detect
+</ul>
+<p>default -&nbsp;&nbsp;3  (int)</p>
+</ul>
+</ul>
+
+
+<h2><a name="colorimetry"></a>Colorimetry</h2>
+<ul>
+<p>This is a list of all possibilities according to the MPEG-2 specs and
+DGDecode.  The right most column shows how GSpot abbreviates each item.</p>
+<table border="1" width="55%">
+  <tr>
+    <td width="10%">0</td>
+    <td width="70%">forbidden</td>
+    <td width="20%">N/A</td>
+  </tr>
+  <tr>
+    <td width="10%">1</td>
+    <td width="70%">ITU-R BT.709</td>
+    <td width="20%">I709</td>
+  </tr>
+  <tr>
+    <td width="10%">2</td>
+    <td width="70%">Unspecified Video (unknown)</td>
+    <td width="20%">N/A</td>
+  </tr>
+  <tr>
+    <td width="10%">3</td>
+    <td width="70%">reserved</td>
+    <td width="20%">N/A</td>
+  </tr>
+  <tr>
+    <td width="10%">4</td>
+    <td width="70%">FCC</td>
+    <td width="20%">FCC</td>
+  </tr>
+  <tr>
+    <td width="10%">5</td>
+    <td width="70%">ITU-R BT.470-2 (exactly the same as ITU-R BT.601)</td>
+    <td width="20%">I470</td>
+  </tr>
+  <tr>
+    <td width="10%">6</td>
+    <td width="70%">SMPTE 170M (exactly the same as ITU-R BT.601)</td>
+    <td width="20%">S170</td>
+  </tr>
+  <tr>
+    <td width="10%">7</td>
+    <td width="70%">SMPTE 240M</td>
+    <td width="20%">S240</td>
+  </tr>
+  <tr>
+    <td width="10%">8-255</td>
+    <td width="70%">reserved</td>
+    <td width="20%">N/A</td>
+  </tr>
+</table>
+<p>** Recommendation BT.601 is an update BT.470-2</p>
+</ul>
+
+
+<h2>Background information</h2>
+<ul>
+<P>There are several ways to convert a YUV stream to RGB. The most well known 
+uses Rec.601 coefficients. It is, for example, used in the color conversion
+routines of Avisynth (by default), VirtualDub and XviD/DivX. When playing back a 
+XviD or DivX file the stream is converted to RGB using Rec.601 coefficients. 
+The main issue is that sometimes other coefficients should be used for the YUV to 
+RGB conversion (Rec.709, FCC, or SMPTE 240M). A problem arises if a stream is 
+encoded using one set of coefficients (Rec.709 coefficients for many dvd streams for
+example), and somewhere in the reencoding-processing-playback chain a different
+set of coefficients is assumed (Rec.601 coefficients for the XviD/DivX decoder, 
+FCC coefficients for TMPGEnc/QuEnc, or Rec.709 coefficients for CCE). It will cause a 
+slight color distortion, which looks like a change in brightness (it's not 
+really a change in brightness, the colors are just slightly off).</p>
+
+<P>How do you know which set of coefficients were used when encoding a MPEG-2 stream? Usually, 
+the coefficient information is stored in the header of the MPEG-2 file (the "matrix_coefficients" 
+field in the "sequence display extension"). Newer versions of GSpot will be able to read and display 
+this information. Also, DGDecode v1.20+ (with Mpeg2source(info=1)) can be used to view it. If this
+extension field is not present in the header of the MPEG-2 file, the specs say we are supposed 
+to assume the default of Rec.709</p>
+</ul>
+
+
+<h2>References</h2>
+<ul>
+<li><a href="http://forum.doom9.org/showthread.php?s=&amp;postid=514595#post514595">users
+reporting the problem</a> - getting different brightness when comparing the avs
+script with opening the mpeg2 directly in VDubMod.
+
+<li><a href="http://forum.doom9.org/showthread.php?s=&amp;threadid=81191">background
+info</a> - doom9 thread about the problem.
+
+<li>The "matrix coefficients" field specifies a set of coefficients given in Table 6-9 of
+<a href="http://le-hacker.org/hacks/mpeg-drafts/is138182.pdf"> ISO/IEC 13818-2</a>, section
+6.3.6 (Rec.709 are not entirely correct).
+
+<li><a href="http://www.itu.int/rec/recommendation.asp?type=folders&amp;lang=e&amp;parent=R-REC-BT.709">ITU-R_BT.709</a>
+- you can get three free recommendations per valid email address.</p>
+</ul>
+
+
+<h2>Changelog</h2>
+<ul>
+<p>v2.5, 25th January 2009<br>
+  + Updated d2v parsing to correctly determine frame count for v16 DGIndex project files.<br>
+  - Fixed a bug causing the mmx/sse2 routines for FCC<->Rec.601 conversions to give incorrect U plane output.<br>
+</p>
+<p>v2.4, 18th January 2009<br>
+  - Fixed a bug causing the sse2 routines not to process the last (width&15) pixels, and the mmx routines not to process the last (width&7) pixels.<br>
+</p>
+<p>v2.3, 08th January 2008<br>
+  - Calculate conversion coefficients for PB/PR rows from luma coefficients<br>
+  - Added <var>inputFR</var> and <var>outputFR</var> parameters allowing for YUV range expansion/contraction<br>
+  - Changed the <var>clamp</var> parameter from bool to int to allow specifying only pre clipping or only post clipping or both<br>
+</p>
+<p>v2.2, 28th August 2007<br>
+  - Changed the integer <var>scaling</var> parameter to a boolean parameter named <var>clamp</var> (scaling 1/2 were redundant)<br>
+  - Fixed source==dest error when using d2v or hints<br>
+  - Fixed thrdmthd being switched internally (i.e. backwards versus the behaviors described in the readme)<br>
+</p>
+<p>v2.1, 18th January 2007<br>
+  + Added multithreading support (the <var>threads</var> and <var>thrdmthd</var> parameters)<br>
+  - Don't invoke AssumeFrameBased() internally during interlaced processing (requires that the input clip be framebased)<br>
+</p>
+<p>v2.0, 12th October 2006 (Changes from v1.10)<br>
+  + Rewrote a large portion of the code<br>
+  + Added ability to convert between any of: Rec.709, FCC, Rec.601, and SMPTE 240M<br>
+  + Added source and dest parameters<br>
+  + Added scaling parameter (optional clipping and unscaled coefficients)<br>
+  + d2v option supports changing colorimetry info (with trim() and frame rearrangement restriction)<br>
+  - fixed a problem with calculated luma values that were < 0 being set to 255 instead of 0
+</p>
+</ul>
+</BODY>
+</HTML>

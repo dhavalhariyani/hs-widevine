@@ -1,0 +1,164 @@
+File : Convolution3d.txt
+
+Copyright (c) 2002 Sébastien LUCAS.  All rights reserved.
+    babas.lucas@laposte.net
+
+This file is subject to the terms of the GNU General Public License as
+published by the Free Software Foundation.  A copy of this license is
+included with this software distribution in the file COPYING.  If you
+do not have a copy, you may obtain a copy by writing to the Free
+Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+
+This software is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details
+
+
+*****************************************************************************************
+
+Convolution3D is an avisynth filter that will apply a 3D convolution to all pixel of a frame.
+for all future release see at http://hellninjacommando.com/con3d/
+
+1 - How to use it : 
+Convolution3d (matrix=0, ythresh=3, cthresh=4, t_ythresh=3, t_cthresh=4, influence=3, debug=0)
+
+Matrix choice : 
+	0 : original matrix : 
+			1 2 1    2 4 2	  1 2 1
+			2 4 1    4 8 4	  2 4 1
+			1 2 1    2 4 2	  1 2 1
+		This matrix is useful for normal movie (not anime) because it keep more details
+	1 : bb idea of full 1 matrix (great idea)
+			1 1 1    1 1 1    1 1 1
+			1 1 1    1 1 1    1 1 1
+			1 1 1    1 1 1    1 1 1
+		This matrix is much usefull with animes or bad quality sources because it blur a little more (so removing more noise)
+
+Temporal influence :
+	It's used especially to speed up a little this filter and to avoid using temporal informations when not needed 
+	(scene change, fade, ...)
+	I first build a limit = Temporal Luma Threshold * Temporal influence
+	For each 2 pixel computed (due to MMX, 2 pixel at the same time), I first check this :
+	if 
+	(Abs (Y0 - Y0[Previous frame]) +
+	Abs (Y0 - Y0[Next frame]) +
+	Abs (Y1 - Y1[Previous frame]) +
+	Abs (Y1 - Y1[Next frame])) > limit
+	then
+		do Spacial work (only 3*3 matrix)
+	Else
+		do Spacial and Temporal work (3*3*3 matrix)
+	The lower it is -> the faster will be the filter but compressibility should be lower
+	The higher it is -> the slower will be the filter but compressibility should be higher
+	if temporal influence is set to -1 then only spatial work is done (high speed).
+	This parameter is a float.
+
+2 - Parameters sample
+
+I build the following presets to make things easier :
+Convolution3d (preset="movieHQ") // Movie Hi Quality (good DVD source)
+	is an alias for Convolution3D (0, 3, 4, 3, 4, 2.8, 0) 
+Convolution3d (preset="movieLQ") // Movie Low Quality (noisy DVD source)
+	is an alias for Convolution3D (0, 6, 10, 6, 8, 2.8, 0) 
+Convolution3d (preset="animeHQ") // Anime Hi Quality (good DVD source)
+	is an alias for Convolution3D (0, 6, 12, 6, 8, 2.8, 0) 
+Convolution3d (preset="animeLQ") // Anime Low Quality (noisy DVD source)
+	is an alias for Convolution3D (1, 8, 16, 8, 8, 2.8, 0) 
+Convolution3d (preset="animeBQ") // Anime Bad Quality (???)
+	is an alias for Convolution3D (1, 12, 22, 8, 8, 2.8, 0) 
+Convolution3d (preset="vhsBQ") // VHS capture Bad Quality (???)
+	is an alias for Convolution3D (0, 32, 128, 16, 64, 10, 0) 
+
+
+
+I had to test Convolution3d with bad quality TV capture and in this case
+you'll have to higher especially the chroma tresholds (causing some ghosting but the overall quality seems to be better).
+I personnaly use these parameters : 
+Convolution3D (0, 32, 128, 32, 128, 10, 0) 
+
+
+The thresholds of Convolution3d are only here to take care of edges and scene change. You can increase the spatial one (especially the chroma threshold) but stop as soon as you see some blurring around the edges (if you want quality). With the settings proposed you shouldn't have this problem. 
+The Temporal one should be left below 10 to avoid ghosting.
+You should especially take care of the threshold with matrix 1, because with this matrix the current frame has less weight so it's easier to have ghosting.
+
+You can find some informations about how it works in : http://forum.doom9.org/showthread.php?s=&threadid=29829
+You can also find a french tutorial in : http://forum.media-video.com/viewtopic.php?t=7682
+
+3 - Current limitations or known problems : .
+	- Work only with YUV2, CHECKED.
+	- require a Integer SSE capable CPU (no PII and K6-II), CHECKED.
+
+WARNING : it's slow, I know it and I try to make it faster so don't rush me about it, thanks in advance.
+
+4 - Credits
+
+Thanks to
+	bb for the original idea and a lot of tests
+	iago, Koepi and TheReal for real full length movie (or capture) tests
+	Tom Barry, Dividee and Sh0dan for their usefull technicals informations or ideas
+	Ctrl-Alt-Suppr for a french tutorial
+	Defiler for hosting Convolution3d
+	all Convolution3D users
+
+
+  Vlad59 (babas.lucas@laposte.net)
+
+Change log :
+
+2002/10/19 v1.01  :
+	- Fixed a stupid bug producing garbage on last line (sometimes Copy-Paste is your enemy ;))
+
+2002/10/18 v1.00  :
+	- Added version to the dll
+	- Added named parameters
+	- Added the special preset parameter
+	- Added some little optimizations (~1-3% more speed)
+	- Added a lot of comment (at least it's a lot for me ;))
+
+2002/09/21 Beta 4 :
+	- Added separate pitch for each frame. Older version use the same pitch for previous, current and next frame (Thanks to dividee for this bug).
+	- Fixed some rounding bugs with matrix 0 (Thanks to WarpEnterprises, Manono and Sh0dan for the report)
+	- Replaced treshold by threshold : bloody typos (Thanks to CAS (a french guy) for this)
+	- added some parameters check
+
+2002/08/24 Beta 3 :
+	- Fixed some rounding bug
+	- Add a little more MMX : +8% in speed but -10% in readability ;)
+	- Again some code cleanup and some renamed variables
+	- New parameter for fade in or fade out (see beta2 change log) : was hardcoded (value = 3) in beta 2.
+
+2002/08/17 Beta 2 :
+	- Fixed some bugs in the threshold check
+	- Fixed a weird bug in the temporal blur used on borders (Should improve quality)
+	- Added specific temporal threshold to be sure to avoid ghosting (I found this idea while reading the readme.txt if STMedianFilter of trbarry where the same difference is made between spacial and temporal threshold, thanks for the idea Tom)
+	- Completly rewrote the threshold check to allow working with byte instead of words
+	- Added a specific check for fade in or fade out to avoid using Temporal informations in  this case (in these scenes : compressibility will be lower but quality better), will be an option in next release.
+
+2002/08/10 Beta 1 :
+	- Added the simple full 1 matrix (thanks to Dividee for the hint about div 27).
+	- code is now included (I had no time to comment & clean it, but I promess to release it)
+	- fixed problem with last line producing garbage
+
+2002/08/09 Alpha 5 :
+	- Some functions are inlined -> + 1fps
+	- small changes in the code -> +0.2 fps
+
+2002/08/07 Alpha 4 (maybe the last alpha) :
+	- Green rectangle problem corrected
+	- cropping problem solved
+	- could be a little slower (I'll check that this weekend)
+
+2002/07/31 Alpha 3 :
+	- Lots of code cleanup
+	- removed unneeded emms (for higher speed)
+	- Now this filter is only 40% slower than TemporalSmoother only
+	- Added a check for SSE capable CPU only
+	- Added a check for YUV input only
+
+2002/07/30 Alpha 2 : 
+	- Added a lot of MMX/SSE optimizations
+	- changed the way to deal with values > threshold
+
+2002/07/27 Alpha 1 : Initial alpha
+

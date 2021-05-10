@@ -1,0 +1,71 @@
+File : Convolution3dYV12.txt
+
+Copyright (c) 2002 Sébastien LUCAS.  All rights reserved.
+    babas.lucas@laposte.net
+
+This file is subject to the terms of the GNU General Public License as
+published by the Free Software Foundation.  A copy of this license is
+included with this software distribution in the file COPYING.  If you
+do not have a copy, you may obtain a copy by writing to the Free
+Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+
+This software is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details
+
+
+*****************************************************************************************
+
+Specific information about Convolution3d for Avisynth 2.5
+for all "normal" release see at http://hellninjacommando.com/con3d/
+
+Know problem : 
+	- works only with YV12
+	- Temporal influence currently disabled.
+
+Todo :
+	- Add some thread (for MaTTer ;)))) (DONE)
+	- correct some of the known problem ....
+
+Big thanks to Sh0dan for this huge work, all avisynth filter developper owe you a lot.
+Big thanks to MaTTeR for the beta test he did with SMP & C3D.
+
+
+Changelog :
+
+2003/03/29 Beta 5 :
+	- Reorganize all the code : it should be easier to maintain and also faster
+	- Maybe other thing I forgot :(
+
+2003/01/01 Beta 4 :
+	- Change AvisynthPluginInit to AvisynthPluginInit2
+
+2003/01/01 Beta 4 Test :
+	- New optimizations (works on byte instead of words)
+	- Rewrite a lot of the macros to simplify the code
+	- Added some debug output to show the SMP status
+	- If debug parameter = -2 -> Force SMP use
+	- If debug parameter = -1 -> Disable SMP use
+	- Added new fast mode with 11 check point only (instead of 27) :
+		If matrix = 2 -> Fast orginal matrix (121)
+		if matrix = 3 -> Fast simple matrix (111)
+	- Fix some problem on non mod-4 width 	
+
+2002/11/30 Beta 3 :
+	- Added little optimization on threshold checks
+	- Should now work with any mod2 width
+	- Checked some potential rounding problems
+	- added basic filtering to border pixels
+	- added case insensitive presets (for Sh0dan !)
+
+2002/11/16 Beta 2 :
+	- Added SMP optimizations (Thanks to MaTTeR for the beta test, +2~4 fps for him).
+	- Reorganize a little the code (new .h files)
+	- If both ythresh and t_ythresh = 0 then luma is not processed at all (speed gain).
+	- idem for chroma
+
+2002/11/07 Beta 1 :
+	Initial YV12 release 
+
+Vlad59
